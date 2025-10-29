@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>26FW 다운 단가 상승률 분석</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        .dashboard-row-single {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+        }
+        .card-single {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 950px;
+            width: 100%;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        .card-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        .item-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .price-summary-compact {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+        .price-item-compact {
+            text-align: center;
+            flex: 1;
+        }
+        .price-label-compact {
+            font-size: 0.75em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .price-value-compact {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #444;
+        }
+        .price-change {
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+        .price-change.positive {
+            color: #e74c3c;
+        }
+        .price-change.negative {
+            color: #27ae60;
+        }
+        .chart-container {
+            position: relative;
+            height: 480px;
+            margin-top: 20px;
+        }
+        .legend-custom {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 30px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        .legend-text {
+            font-size: 0.85em;
+            color: #555;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 26FW 다운 단가 상승률 분석 리포트</h1>
+            <p>시즌별 단가 추이 및 증감률 비교</p>
+        </div>
+
+        <div class="dashboard-row">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">80/20 DUCK</div>
+                    <div class="item-badge">오리털</div>
+                </div>
+                <div class="price-summary-compact">
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">25FW 단가</div>
+                        <div class="price-value-compact">$44.63</div>
+                    </div>
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">26FW 10월 단가</div>
+                        <div class="price-value-compact">$51.70</div>
+                        <div class="price-change positive">▲ 15.8%</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="duck8020Chart"></canvas>
+                </div>
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9b59b6;"></div>
+                        <div class="legend-text">25FW 단가</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <div class="legend-text">26FW 단가</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">90/10 DUCK</div>
+                    <div class="item-badge">프리미엄 오리털</div>
+                </div>
+                <div class="price-summary-compact">
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">24FW</div>
+                        <div class="price-value-compact">$50.21</div>
+                    </div>
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">25FW</div>
+                        <div class="price-value-compact">$69.80</div>
+                    </div>
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">26FW 10월</div>
+                        <div class="price-value-compact">$67.90</div>
+                        <div class="price-change positive" style="font-size: 0.75em;">vs 24FW ▲35.2%</div>
+                        <div class="price-change negative" style="font-size: 0.75em;">vs 25FW ▼2.7%</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="duck9010Chart"></canvas>
+                </div>
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <div class="legend-text">24FW 단가</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9b59b6;"></div>
+                        <div class="legend-text">25FW 단가</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <div class="legend-text">26FW 단가</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-row-single">
+            <div class="card-single">
+                <div class="card-header">
+                    <div class="card-title">80/20 GOOSE</div>
+                    <div class="item-badge">거위털</div>
+                </div>
+                <div class="price-summary-compact">
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">24FW</div>
+                        <div class="price-value-compact">$95.67</div>
+                    </div>
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">25FW</div>
+                        <div class="price-value-compact">$87.78</div>
+                    </div>
+                    <div class="price-item-compact">
+                        <div class="price-label-compact">26FW 10월</div>
+                        <div class="price-value-compact">$88.30</div>
+                        <div class="price-change negative" style="font-size: 0.75em;">vs 24FW ▼7.7%</div>
+                        <div class="price-change positive" style="font-size: 0.75em;">vs 25FW ▲0.6%</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="goose8020Chart"></canvas>
+                </div>
+                <div class="legend-custom">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <div class="legend-text">24FW 단가</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9b59b6;"></div>
+                        <div class="legend-text">25FW 단가</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <div class="legend-text">26FW 단가</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Chart.register({
+            id: 'dataLabelsPlugin',
+            afterDatasetsDraw: function(chart) {
+                var ctx = chart.ctx;
+                const chartId = chart.canvas.id;
+                // Per-chart offsets (26FW vs 24FW = top, 26FW vs 25FW = bottom)
+                const OFFSETS = {
+                  'duck8020Chart': { top: 30, bottom: 120 },   // 80/20 DUCK
+                  'duck9010Chart': { top: 270, bottom: 320 },   // 90/10 DUCK
+                  'goose8020Chart': { top: 90, bottom: 130 }   // 80/20 GOOSE (independent tuning)
+                };
+                const cfg = OFFSETS[chartId] || { top: 30, bottom: 30 };
+                const topGuideY = chart.chartArea.top + cfg.top;
+                const bottomGuideY = chart.chartArea.bottom - cfg.bottom;
+                const UP_OFFSET = 40;
+                const DOWN_OFFSET = 40;
+                const UNDER_OFFSET = 32;
+const OVER_OFFSET =67;
+// which comparison goes under/over each chart
+const underVs24 = (chartId === 'duck9010Chart');
+const underVs25 = (chartId === 'duck8020Chart' || chartId === 'goose8020Chart');
+const overVs24  = (chartId === 'duck8020Chart' || chartId === 'goose8020Chart');
+const overVs25  = (chartId === 'duck9010Chart');
+                
+                chart.data.datasets.forEach(function(dataset, i) {
+                    var meta = chart.getDatasetMeta(i);
+                    if (!meta.hidden) {
+                        meta.data.forEach(function(element, index) {
+                            ctx.save();
+                            // Only show all-month labels for 26FW; for 24/25FW show October only
+                            var is24 = dataset.label === '24FW 단가';
+                            var is25 = dataset.label === '25FW 단가';
+                            var showThis = true;
+                            if (is24 || is25) {
+                                var lastIdx = meta.data.length - 1; // '10월' index
+                                showThis = (index === lastIdx);
+                            }
+                            if (showThis) {
+                                ctx.fillStyle = dataset.borderColor;
+                                ctx.font = 'bold 12px sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'bottom';
+                                var dataString = '$' + dataset.data[index].toFixed(2);
+                                var position = element.tooltipPosition();
+                                ctx.fillText(dataString, position.x, position.y - 14);
+                            }
+                            ctx.restore();
+                        });
+                        
+                        if (meta.data.length > 0) {
+                            var lastElement = meta.data[meta.data.length - 1];
+                            var position = lastElement.tooltipPosition();
+                            ctx.save();
+                            ctx.fillStyle = dataset.borderColor;
+                            ctx.font = 'bold 14px sans-serif';
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'middle';
+                            var label = dataset.label.replace(' 단가', '');
+                            ctx.fillText(label, position.x + 30, position.y);
+                            ctx.restore();
+                        }
+                    }
+                });
+                
+                var fw26 = null;
+                var fw24 = null;
+                var fw25 = null;
+                var meta26 = null;
+                var meta24 = null;
+                var meta25 = null;
+                
+                chart.data.datasets.forEach(function(dataset, i) {
+                    if (dataset.label === '26FW 단가') {
+                        fw26 = dataset;
+                        meta26 = chart.getDatasetMeta(i);
+                    } else if (dataset.label === '24FW 단가') {
+                        fw24 = dataset;
+                        meta24 = chart.getDatasetMeta(i);
+                    } else if (dataset.label === '25FW 단가') {
+                        fw25 = dataset;
+                        meta25 = chart.getDatasetMeta(i);
+                    }
+                });
+                
+                if (fw26 && meta26) {
+                    /* MoM labels removed by request */
+meta26.data.forEach(function(point26, index) {
+                        if (fw24 && meta24) {
+                            var change = ((fw26.data[index] - fw24.data[index]) / fw24.data[index] * 100);
+                            var midY = overVs24 && point26 ? (point26.y - OVER_OFFSET) : (underVs24 && point26 ? (point26.y + UNDER_OFFSET) : topGuideY);
+                            
+                            ctx.save();
+                            ctx.font = 'bold 12px sans-serif';
+                            var text = (change >= 0 ? '▲' : '▼') + Math.abs(change).toFixed(1) + '%';
+                            var metrics = ctx.measureText(text);
+                            ctx.fillStyle = 'rgba(255, 240, 240, 0.95)';
+                            ctx.fillRect(point26.x - metrics.width / 2 - 5, midY - 8, metrics.width + 10, 16);
+                            ctx.fillStyle = change >= 0 ? '#e74c3c' : '#27ae60';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(text, point26.x, midY);
+                            ctx.restore();
+                        }
+                        
+                        if (fw25 && meta25) {
+                            var change = ((fw26.data[index] - fw25.data[index]) / fw25.data[index] * 100);
+                            var midY = overVs25 && point26 ? (point26.y - OVER_OFFSET) : (underVs25 && point26 ? (point26.y + UNDER_OFFSET) : bottomGuideY);
+                ctx.save();
+                            ctx.font = 'bold 12px sans-serif';
+                            var text = (change >= 0 ? '▲' : '▼') + Math.abs(change).toFixed(1) + '%';
+                            var metrics = ctx.measureText(text);
+                            ctx.fillStyle = 'rgba(240, 240, 255, 0.95)';
+                            ctx.fillRect(point26.x - metrics.width / 2 - 5, midY - 8, metrics.width + 10, 16);
+                            ctx.fillStyle = change >= 0 ? '#e74c3c' : '#27ae60';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(text, point26.x, midY);
+                            ctx.restore();
+                        }
+                    });
+                }
+            }
+        });
+
+        Chart.register({
+            id: 'axisBreak',
+            beforeDraw: function(chart) {
+                if (chart.canvas.id !== 'goose8020Chart') return;
+                
+                var ctx = chart.ctx;
+                var yAxis = chart.scales.y;
+                var xAxis = chart.scales.x;
+                var breakY = yAxis.getPixelForValue(89.5);
+                
+                // zigzag removed per request
+// grey zigzag removed
+// removed top-right 24FW label per request
+
+                // Draw a visual 24FW reference line (fixed pixel position)
+                // This is only for goose8020Chart and does not affect scales.
+                var yRef = chart.chartArea.top + 18; // just under the zigzag
+                ctx.save();
+                ctx.strokeStyle = '#e74c3c'; // match 24FW legend color
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(xAxis.left, yRef);
+                ctx.lineTo(xAxis.right, yRef);
+                ctx.stroke();
+                ctx.restore();
+
+                // 24FW monthly markers & labels (GOOSE only)
+                // Draw small red ring markers and '$95.67' above each month
+                (function() {
+                    var tickCount = (xAxis.ticks && xAxis.ticks.length) ? xAxis.ticks.length : 0;
+                    var gap = 8; // label gap above dashed line
+                    ctx.save();
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.fillStyle = '#ffffff';
+                    for (var i = 0; i < tickCount; i++) {
+                        var x = xAxis.getPixelForTick(i);
+                        ctx.beginPath();
+                        ctx.arc(x, yRef, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // price text above
+                        ctx.font = '13px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillStyle = '#e74c3c';
+                        ctx.fillText('$95.67', x, yRef - gap);
+                    }
+                    // right-end '24FW' label
+                    ctx.font = 'bold 13px sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.fillText('24FW', xAxis.right + 30, yRef);
+                    ctx.restore();
+                })();
+
+                ctx.restore();
+            }
+        });
+
+        var commonOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 70, top: 30, bottom: 10 } },
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } },
+            scales: {
+                y: { title: { display: true, text: '단가 ($)', font: { size: 14, weight: 'bold' } }, ticks: { callback: function(v) { return '$' + v.toFixed(2); }, font: { size: 12 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { title: { display: true, text: '26FW 월별', font: { size: 13, weight: 'bold' } }, ticks: { font: { size: 12 } }, grid: { display: false } }
+            }
+        };
+
+        new Chart(document.getElementById('duck8020Chart'), {
+            type: 'line',
+            data: {
+                labels: ['7월', '8월', '9월', '10월'],
+                datasets: [
+                    { label: '25FW 단가', data: [44.63, 44.63, 44.63, 44.63], borderColor: '#9b59b6', borderWidth: 3, borderDash: [5, 5], tension: 0, pointRadius: 5 },
+                    { label: '26FW 단가', data: [46.27, 48.43, 47.93, 51.70], borderColor: '#3498db', borderWidth: 4, tension: 0.3, pointRadius: 6 }
+                ]
+            },
+            options: commonOpts
+        });
+
+        new Chart(document.getElementById('duck9010Chart'), {
+            type: 'line',
+            data: {
+                labels: ['7월', '8월', '9월', '10월'],
+                datasets: [
+                    { label: '24FW 단가', data: [50.21, 50.21, 50.21, 50.21], borderColor: '#e74c3c', borderWidth: 3, borderDash: [5, 5], tension: 0, pointRadius: 5 },
+                    { label: '25FW 단가', data: [69.80, 69.80, 69.80, 69.80], borderColor: '#9b59b6', borderWidth: 3, borderDash: [5, 5], tension: 0, pointRadius: 5 },
+                    { label: '26FW 단가', data: [57.77, 59.77, 59.27, 67.90], borderColor: '#3498db', borderWidth: 4, tension: 0.3, pointRadius: 6 }
+                ]
+            },
+            options: commonOpts
+        });
+
+        new Chart(document.getElementById('goose8020Chart'), {
+            type: 'line',
+            data: {
+                labels: ['7월', '8월', '9월', '10월'],
+                datasets: [
+                    { label: '24FW 단가', data: [95.67, 95.67, 95.67, 95.67], borderColor: '#e74c3c', borderWidth: 3, borderDash: [5, 5], tension: 0, pointRadius: 5 },
+                    { label: '25FW 단가', data: [87.78, 87.78, 87.78, 87.78], borderColor: '#9b59b6', borderWidth: 3, borderDash: [5, 5], tension: 0, pointRadius: 5 },
+                    { label: '26FW 단가', data: [88.43, 87.10, 85.43, 88.30], borderColor: '#3498db', borderWidth: 4, tension: 0.3, pointRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { left: 10, right: 70, top: 30, bottom: 10 } },
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } },
+                scales: {
+                    y: {
+                        min: 84,
+                        max: 92,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function(v) {
+                                if (v === 90 || v === 91) {
+                                    return '';
+                                }
+                                if (v === 92) {
+                                    return '$96.00';
+                                }
+                                return '$' + v.toFixed(2);
+                            },
+                            font: { size: 12 }
+                        },
+                        title: { display: true, text: '단가 ($)', font: { size: 14, weight: 'bold' } },
+                        grid: {
+                            color: function(ctx) {
+                                var v = ctx.tick.value;
+                                if (v === 90 || v === 91) {
+                                    return 'transparent';
+                                }
+                                return 'rgba(0,0,0,0.05)';
+                            }
+                        }
+                    },
+                    x: { title: { display: true, text: '26FW 월별', font: { size: 13, weight: 'bold' } }, ticks: { font: { size: 12 } }, grid: { display: false } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
